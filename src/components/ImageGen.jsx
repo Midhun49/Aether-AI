@@ -1,11 +1,24 @@
-import React, { useState } from 'react';
-import { Image as ImageIcon, Wand2, Download, RefreshCw, AlertCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import { Image as ImageIcon, Wand2, Download, RefreshCw, AlertCircle, Upload, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ImageGen = () => {
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState(null);
+  const [referenceImage, setReferenceImage] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReferenceImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleGenerate = () => {
     if (!prompt.trim()) return;
@@ -65,7 +78,58 @@ const ImageGen = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="glass-card" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h4 style={{ margin: 0 }}>Reference Image</h4>
+                {referenceImage && (
+                  <button 
+                    onClick={() => setReferenceImage(null)}
+                    style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
+                  >
+                    <X size={14} /> Remove
+                  </button>
+                )}
+              </div>
+              
+              {!referenceImage ? (
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    width: '100%',
+                    height: '100px',
+                    border: '1px dashed var(--border-subtle)',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    background: 'rgba(255,255,255,0.02)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+                >
+                  <Upload size={24} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Click to upload reference</p>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileUpload} 
+                    accept="image/*" 
+                    style={{ display: 'none' }} 
+                  />
+                </div>
+              ) : (
+                <div style={{ position: 'relative', width: '100%', height: '100px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--accent-primary)' }}>
+                  <img src={referenceImage} alt="Reference" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.5), transparent)', display: 'flex', alignItems: 'flex-end', padding: '8px' }}>
+                    <p style={{ fontSize: '10px', color: 'white' }}>Image-to-Image Mode Active</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="glass-card" style={{ padding: '24px' }}>
               <h4 style={{ marginBottom: '15px' }}>Prompt</h4>
               <textarea 

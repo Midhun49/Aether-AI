@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
-import { Play, Video as VideoIcon, Wand2, Download, Loader2, AlertTriangle } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Play, Video as VideoIcon, Wand2, Download, Loader2, AlertTriangle, Upload, X, FileImage } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const VideoGen = () => {
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [videoUrl, setVideoUrl] = useState(null);
+  const [sourceAsset, setSourceAsset] = useState(null);
+  const [assetType, setAssetType] = useState(null); // 'image' or 'video'
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAssetType(file.type.startsWith('video') ? 'video' : 'image');
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSourceAsset(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleGenerate = () => {
     if (!prompt.trim()) return;
@@ -64,6 +79,65 @@ const VideoGen = () => {
           </div>
 
           <div className="glass-card" style={{ padding: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h4 style={{ margin: 0 }}>Source Asset (Image-to-Video)</h4>
+              {sourceAsset && (
+                <button 
+                  onClick={() => setSourceAsset(null)}
+                  style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
+                >
+                  <X size={14} /> Remove
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+              {!sourceAsset ? (
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    flex: 1,
+                    height: '120px',
+                    border: '1px dashed var(--border-subtle)',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    background: 'rgba(255,255,255,0.02)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+                >
+                  <Upload size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
+                  <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Upload an image or video as reference</p>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileUpload} 
+                    accept="image/*,video/*" 
+                    style={{ display: 'none' }} 
+                  />
+                </div>
+              ) : (
+                <div style={{ flex: 1, position: 'relative', height: '120px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--accent-primary)' }}>
+                  {assetType === 'video' ? (
+                    <video src={sourceAsset} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <img src={sourceAsset} alt="Source" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  )}
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', display: 'flex', alignItems: 'flex-end', padding: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {assetType === 'video' ? <VideoIcon size={14} color="white" /> : <FileImage size={14} color="white" />}
+                      <span style={{ fontSize: '12px', color: 'white', fontWeight: '500' }}>Reference Loaded</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <h4 style={{ marginBottom: '15px' }}>Scene Description</h4>
             <div style={{ display: 'flex', gap: '20px' }}>
               <div style={{ flex: 1 }}>
